@@ -284,13 +284,14 @@ def adding_new_domain(q1):
 
         # Checking domain name isn't already monitored
         with open('domains.txt', 'r+') as domains:
-            for line in domains:
-                if domain_to_monitor == line.replace('\n', ''):
-                    print(colored(
-                        '[!] The domain name {} is already being '
-                        'monitored.'.format(domain_to_monitor),
-                        'red'))
-                    sys.exit(1)
+            domains = [i.strip() for i in domains.readlines()]
+            if domain_to_monitor in domains:
+                print(colored(
+                    '[!] The domain name {} is already being '
+                    'monitored.'.format(domain_to_monitor),
+                    'red'))
+                sys.exit(1)
+
             response = cert_database().lookup(domain_to_monitor)
             if response:
                 # Saving a copy of current subdomains
@@ -298,6 +299,7 @@ def adding_new_domain(q1):
                           'a') as subdomains:
                     for subdomain in response:
                         subdomains.write(subdomain + '\n')
+
                 # Fetching subdomains if not monitored
                 with open('domains.txt', 'a') as domains:
                     domains.write(domain_to_monitor.lower() + '\n')
@@ -347,6 +349,12 @@ def adding_new_domain(q1):
                             subdomains.write(subdomain + '\n')
         except queue.Empty:
             pass
+
+
+def save_domain(line, response, subdomains):
+    with open('./output/' + line.lower() + '.txt', 'a') as subdomains:
+        for subdomain in response:
+            subdomains.write(subdomain + '\n')
 
 
 # Retrieves new list of subdomains and stores a temporary text file
