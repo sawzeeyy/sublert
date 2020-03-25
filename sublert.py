@@ -105,15 +105,16 @@ def parse_args():
 
 
 def domain_sanity_check(domain):  # Verify the domain name sanity
-    domain = get_fld(domain, fix_protocol=True, fail_silently=True)
     if domain:
-        return domain
-    else:
-        print(colored(
-            '[!] Incorrect domain format. Please follow this format:'
-            ' example.com, http(s)://example.com, www.example.com',
-            'red'))
-        sys.exit(1)
+        domain = get_fld(domain, fix_protocol=True, fail_silently=True)
+        if domain:
+            return domain
+        else:
+            print(colored(
+                '[!] Incorrect domain format. Please follow this format:'
+                ' example.com, http(s)://example.com, www.example.com',
+                'red'))
+            sys.exit(1)
 
 
 # Posting to Slack
@@ -218,14 +219,15 @@ class cert_database(object):
                 "SELECT ci.NAME_VALUE NAME_VALUE FROM certificate_identity "
                 "ci WHERE ci.NAME_TYPE = 'dNSName' AND "
                 "reverse(lower(ci.NAME_VALUE)) LIKE "
-                "reverse(lower('%{}'));".format('coda.com')
+                "reverse(lower('%{}'));".format(domain)
                 )
 
-            for result in cursor.fetchall():
+            for result in set(cursor.fetchall()):
                 matches = re.findall(r"\'(.+?)\'", str(result))
                 for subdomain in matches:
                     if get_fld(subdomain, fix_protocol=True,
                                fail_silently=True) == domain:
+                        subdomain = subdomain.replace('*.', '')
                         unique_domains.add(subdomain.lower())
             return sorted(unique_domains)
         except:
@@ -485,7 +487,7 @@ def posting_to_slack(result, dns_resolve, dns_output):
                             data = '```A : {}```'.format(i)
                             slack(data)
 
-                    if 'CNAME' dns_result[subdomain]:
+                    if 'CNAME' in dns_result[subdomain]:
                         for i in dns_result[subdomain]['CNAME']:
                             data = '```CNAME : {}```'.format(i)
                             slack(data)
