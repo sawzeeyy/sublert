@@ -149,24 +149,23 @@ def reset(do_reset):
 
 # Remove a domain from the monitored list
 def remove_domain(domain_to_delete):
-    new_list = []
     if domain_to_delete:
-        with open('domains.txt', 'r') as domains:
-            for line in domains:
-                line = line.replace('\n', '')
-                if line in domain_to_delete:
-                    os.system('rm -f ./output/{}.txt'.format(line))
-                    print(colored(
-                        '\n[-] {} was successfully removed from the '
-                        'monitored list.'.format(line), 'green'))
-                else:
-                    new_list.append(line)
-
-        os.system('rm -f domains.txt')
-        with open('domains.txt', 'w') as new_file:
-            for i in new_list:
-                new_file.write(i + '\n')
-        sys.exit(1)
+        domains = [i.strip() for i in open('domains.txt', 'r').readlines()]
+        if domain_to_delete not in domains:
+            print(colored(
+                '\n[-] Unfortunately, {} was not found in the '
+                'monitored list.'.format(domain_to_delete), 'red'))
+            sys.exit(1)
+        else:
+            os.system('rm -f domains.txt')
+            with open('domains.txt', 'w') as new_file:
+                for i in domains:
+                    if i != domain_to_delete:
+                        new_file.write(i + '\n')
+            print(colored(
+                '\n[-] {} was successfully removed from the '
+                'monitored list.'.format(domain_to_delete), 'green'))
+            sys.exit(1)
 
 
 # List all the monitored domains
@@ -295,6 +294,7 @@ def adding_new_domain(q1):
             response = cert_database().lookup(domain_to_monitor)
             if response:
                 # Saving a copy of current subdomains
+                # save_subdomain(line, response, subdomains)
                 with open('./output/' + domain_to_monitor.lower() + '.txt',
                           'a') as subdomains:
                     for subdomain in response:
@@ -343,6 +343,7 @@ def adding_new_domain(q1):
             if not os.path.isfile('./output/' + line.lower() + '.txt'):
                 response = cert_database().lookup(line)
                 if response:
+                    # save_subdomain(line, response, subdomains)
                     with open('./output/' + line.lower() + '.txt',
                               'a') as subdomains:
                         for subdomain in response:
@@ -351,7 +352,9 @@ def adding_new_domain(q1):
             pass
 
 
-def save_domain(line, response, subdomains):
+# Saves subdomains in domain.tld.txt
+# This might come handy later
+def save_subdomain(line, response, subdomains):
     with open('./output/' + line.lower() + '.txt', 'a') as subdomains:
         for subdomain in response:
             subdomains.write(subdomain + '\n')
