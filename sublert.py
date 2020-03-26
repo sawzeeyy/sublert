@@ -245,7 +245,8 @@ class cert_database(object):
                 content = req.content.decode('utf-8')
                 data = json.loads(content)
                 for subdomain in data:
-                    subdomains.add(subdomain['name_value'].lower())
+                    subdomain = subdomain['name_value'].replace('*.', '')
+                    subdomains.add(subdomain.lower())
                 return sorted(subdomains)
 
 
@@ -386,27 +387,30 @@ def check_new_subdomains(q2):
 def compare_files_diff(domain_to_monitor):
     global enable_logging
     if domain_to_monitor is None and domain_to_delete is None:
-        result = []
+        result = set()
         with open('domains.txt', 'r') as targets:
             for line in targets:
                 domain_to_monitor = line.replace('\n', '')
                 try:
-                    file1 = open(
+                    file1 = [i.strip() for i in open(
                         './output/' + domain_to_monitor.lower() + '.txt', 'r'
-                        )
-                    file2 = open(
+                        ).readlines()]
+                    file2 = [i.strip() for i in open(
                         './output/' + domain_to_monitor.lower() + '_tmp.txt',
-                        'r')
+                        'r').readlines()]
                     diff = difflib.ndiff(file1.readlines(), file2.readlines())
 
                     # Check if there are new items/subdomains
-                    changes = [l for l in diff if l.startswith('+ ')]
-                    for c in changes:
+                    added = [line[1:] for line in lines if line[0] == '+']
+                    removed = [line[1:] for line in lines if line[0] == '-']
+                    # changes = [l for l in diff if l.startswith('+ ')]
+                    for c in added:
                         c = c.replace('+ ', '')
                         c = c.replace('*.', '')
                         c = c.replace('\n', '')
-                        result.append(c)
-                        result = list(set(result))  # Remove duplicates
+                        if c not in removed:
+                            result.add(c)  # Prevent duplicates
+
                 except FileNotFoundError:
                     error = 'There was an error opening one of the files: {}'
                     ' or {}'.format(domain_to_monitor + '.txt',
@@ -445,7 +449,7 @@ def dns_resolution(new_subdomains):
             dns_results[domain]['A'] = eval(
                 '["Timed out while resolving."]')
             dns_results[domain]['CNAME'] = eval(
-                '["Timed out error while"" resolving."]')
+                '["Timed out error while resolving."]')
         except dns.exception.DNSException:
             dns_results[domain]['A'] = eval(
                 '["There was an error while resolving."]'
@@ -486,7 +490,7 @@ def posting_to_slack(result, dns_resolve, dns_output):
                 rev_url.append(get_fld(url, fix_protocol=True))
 
             # Filters non-resolving subdomains from new_subdomains list
-            unique_list = list(set(new_subdomains) & set(dns_result.keys()))
+            unique_list = list(new_subdomains & set(dns_result.keys()))
 
             for subdomain in unique_list:
                 data = '{}:new: {}'.format(at_channel(), subdomain)
