@@ -127,8 +127,8 @@ def slack(data):
                         headers={'Content-Type': 'application/json'}
                         )
     if response.status_code != 200:
-        error = 'Request to slack returned an error {}, '
-        'the response is: \n{}'.format(response.status_code, response.text)
+        error = 'Request to slack returned an error {}, '\
+            'the response is: \n{}'.format(response.status_code, response.text)
         errorlog(error, enable_logging)
     if slack_sleep_enabled:
         time.sleep(1)
@@ -196,8 +196,8 @@ def errorlog(error, enable_logging):
                             headers={'Content-Type': 'application/json'}
                                 )
         if response.status_code != 200:
-            error = 'Request to slack returned an error {}, '
-            'the response is:\n{}'.format(response.status_code, response.text)
+            error = 'Request to slack returned an error {}, the response '\
+                'is:\n{}'.format(response.status_code, response.text)
             errorlog(error, enable_logging)
 
 
@@ -235,8 +235,8 @@ class cert_database(object):
                 domain = '%25.{}'.format(domain)
                 url = base_url.format(domain)
             subdomains = set()
-            user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; '
-            'rv:64.0) Gecko/20100101 Firefox/64.0'
+            user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.14; '\
+                'rv:64.0) Gecko/20100101 Firefox/64.0'
 
             # Times out after 30 seconds waiting (Mainly for large datasets)
             req = requests.get(url, headers={'User-Agent': user_agent},
@@ -417,9 +417,9 @@ def compare_files_diff(domain_to_monitor):
                                 removed.add(line[1:])
                         result = added - removed  # Prevent duplicates
                 except FileNotFoundError:
-                    error = 'There was an error opening one of the files: {}'
-                    ' or {}'.format(domain_to_monitor + '.txt',
-                                    domain_to_monitor + '_tmp.txt')
+                    error = 'There was an error opening one of the files: {}'\
+                        ' or {}'.format(domain_to_monitor + '.txt',
+                                        domain_to_monitor + '_tmp.txt')
                     errorlog(error, enable_logging)
                     os.system('rm -f ./output/{}'.format(line.replace('\n',
                               '') + '_tmp.txt'))
@@ -547,8 +547,8 @@ def posting_to_slack(result, dns_resolve, dns_output):
 
     else:
         if not domain_to_monitor:
-            data = "{}:-1: We couldn't find any new valid subdomains."
-            "".format(at_channel())
+            data = "{}:-1: We couldn't find any new valid subdomains."\
+                "".format(at_channel())
             slack(data)
             print(colored('\n[!] Done. ', 'green'))
             os.system('rm -f ./output/*_tmp.txt')
