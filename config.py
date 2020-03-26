@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 # Slack webhooks for notifications
 posting_webhook = "https://hooks.slack.com/services/<secret>"
