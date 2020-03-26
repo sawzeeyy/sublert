@@ -398,19 +398,24 @@ def compare_files_diff(domain_to_monitor):
                     file2 = [i.strip() for i in open(
                         './output/' + domain_to_monitor.lower() + '_tmp.txt',
                         'r').readlines()]
-                    diff = difflib.ndiff(file1.readlines(), file2.readlines())
-
+                    diff = list(
+                        difflib.unified_diff(
+                            list(set(file1)), list(set(file2)),
+                            lineterm='', n=0)
+                        )
                     # Check if there are new items/subdomains
-                    added = [line[1:] for line in lines if line[0] == '+']
-                    removed = [line[1:] for line in lines if line[0] == '-']
-                    # changes = [l for l in diff if l.startswith('+ ')]
-                    for c in added:
-                        c = c.replace('+ ', '')
-                        c = c.replace('*.', '')
-                        c = c.replace('\n', '')
-                        if c not in removed:
-                            result.add(c)  # Prevent duplicates
-
+                    if diff:
+                        added = set()
+                        removed = set()
+                        diff = diff[2:]
+                        for line in diff:
+                            line = line.replace('*.', '')
+                            line = line.replace('\n', '')
+                            if line.startswith('+'):
+                                added.add(line[1:])
+                            elif line.startswith('-'):
+                                removed.add(line[1:])
+                        result = added - removed  # Prevent duplicates
                 except FileNotFoundError:
                     error = 'There was an error opening one of the files: {}'
                     ' or {}'.format(domain_to_monitor + '.txt',
